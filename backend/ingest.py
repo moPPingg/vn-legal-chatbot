@@ -16,7 +16,7 @@ def main():
 
     stats = get_stats()
     if stats["total_vectors"] > 0:
-        print(f"✓ Index already has {stats['total_vectors']} vectors. Delete faiss_index/ to re-ingest.")
+        print(f"Index already has {stats['total_vectors']} vectors. Delete faiss_index/ to re-ingest.")
         return
 
     print(f"Loading documents (max={args.max_docs})...")
@@ -25,12 +25,12 @@ def main():
     docs = chunk_documents(df, args.chunk_size, args.chunk_overlap)
     print(f"Building FAISS index from {len(docs)} chunks...")
     n = build_index(docs)
-    print(f"✓ Index built with {n} vectors")
+    print(f"Index built with {n} vectors")
 
     print("Training classifier...")
     train_classifier()
-    print("✓ Classifier trained")
-    print("\nDone! Start server with: uvicorn app.main:app --reload --port 8001")
+    print("Classifier trained")
+    print("\nDone! Start server with: uvicorn app.main:app --reload --port 8000")
 
 if __name__ == "__main__":
     main()

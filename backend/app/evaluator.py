@@ -56,7 +56,7 @@ def run_evaluation():
     print(f"Legal Basis Rate:    {basis_rate:.0%}")
     print("-"*70)
     for r in results:
-        status = "✓" if r["classifier_correct"] else "✗"
+        status = "OK" if r["classifier_correct"] else "FAIL"
         print(f"  {status} [{r['predicted_law']:12s}] {r['question'][:50]:50s} conf={r['confidence']}")
     print("="*70)
 

@@ -4,7 +4,7 @@ import logging, time
 from app.models import ChatRequest, ChatResponse, LegalAnswer
 from app.rag.retriever import search
 from app.prompt_builder import build_messages
-from app.llm_client import call_llm
+from app.llm_client import call_llm, rewrite_query
 from app.config import RAG_TOP_K
 
 logger = logging.getLogger(__name__)
@@ -21,9 +21,12 @@ def run_pipeline(req: ChatRequest) -> ChatResponse:
 
     logger.info("Pipeline: q=%r, law=%s", question[:60], law_type)
 
+    # Stage 1: Query Expansion
+    rewritten_query = rewrite_query(question)
+    
     # Stage 2: Retrieval
     t0 = time.time()
-    docs = search(question=question, law_type=law_type, top_k=RAG_TOP_K)
+    docs = search(question=rewritten_query, law_type=law_type, top_k=RAG_TOP_K)
     retrieval_time = time.time() - t0
     logger.info("Retrieved %d documents in %.2fs", len(docs), retrieval_time)
 

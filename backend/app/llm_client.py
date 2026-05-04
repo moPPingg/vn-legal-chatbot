@@ -89,3 +89,43 @@ def call_llm(messages: List[Dict[str, str]], max_retries: int = 2) -> LegalAnswe
         confidence="low",
         note=f"Lỗi: {last_error}",
     )
+
+
+def generate_text(prompt: str, system_prompt: Optional[str] = None) -> str:
+    """General purpose text generation (no JSON enforcement)."""
+    messages = []
+    if system_prompt:
+        messages.append({"role": "system", "content": system_prompt})
+    messages.append({"role": "user", "content": prompt})
+
+    try:
+        response = client.chat(
+            model=OLLAMA_MODEL,
+            messages=messages,
+            options={"temperature": 0.0, "num_predict": 256},
+        )
+        return response.message.content.strip()
+    except Exception as e:
+        logger.error("Error in generate_text: %s", e)
+        return ""
+
+
+def rewrite_query(original_query: str) -> str:
+    """Rewrite a casual query into a formal legal query for better retrieval."""
+    system_prompt = """Bạn là một chuyên gia phân tích ngôn ngữ pháp lý. 
+Nhiệm vụ của bạn là chuyển đổi câu hỏi dân dã của người dùng thành các từ khóa hoặc câu truy vấn mang tính pháp lý chuẩn mực (Query Expansion/Rewriting) để tối ưu hóa việc tìm kiếm trong cơ sở dữ liệu Vector (Vector Database Search).
+
+Quy tắc:
+1. Giữ nguyên ý định cốt lõi của người dùng.
+2. Trả về đúng 1 câu truy vấn đã được viết lại, không giải thích gì thêm."""
+
+    prompt = f"Câu hỏi gốc: \"{original_query}\"\nTruy vấn pháp lý tối ưu:"
+    
+    rewritten = generate_text(prompt, system_prompt)
+    if rewritten:
+        # Remove quotes if the LLM added them
+        rewritten = rewritten.replace('"', '').replace("'", "")
+        logger.info("Rewritten query: %r -> %r", original_query, rewritten)
+        return rewritten
+    return original_query
+

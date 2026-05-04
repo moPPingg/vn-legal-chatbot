@@ -1,6 +1,6 @@
 """Vector Store — FAISS index with metadata (teckstack.md §3.4, pipeline.md §3.2)."""
 from __future__ import annotations
-import json, logging, pickle
+import json, logging, pickle, os
 from pathlib import Path
 from typing import List, Dict, Any, Optional
 import numpy as np
@@ -24,7 +24,8 @@ def _ensure_dir():
 def save_index(index: faiss.Index, metadata: List[Dict[str, Any]]):
     """Persist FAISS index and metadata to disk."""
     _ensure_dir()
-    faiss.write_index(index, str(FAISS_DIR / INDEX_FILE))
+    rel_path = os.path.relpath(FAISS_DIR / INDEX_FILE)
+    faiss.write_index(index, rel_path)
     with open(FAISS_DIR / META_FILE, "wb") as f:
         pickle.dump(metadata, f)
     logger.info("Saved FAISS index (%d vectors) + metadata", index.ntotal)
@@ -39,7 +40,8 @@ def load_index() -> tuple[faiss.Index, List[Dict[str, Any]]]:
     meta_path = FAISS_DIR / META_FILE
     if not idx_path.exists():
         raise FileNotFoundError(f"FAISS index not found at {idx_path}. Run ingest first.")
-    _index = faiss.read_index(str(idx_path))
+    rel_path = os.path.relpath(idx_path)
+    _index = faiss.read_index(rel_path)
     with open(meta_path, "rb") as f:
         _metadata = pickle.load(f)
     logger.info("Loaded FAISS index (%d vectors)", _index.ntotal)

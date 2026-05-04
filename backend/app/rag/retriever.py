@@ -31,7 +31,7 @@ def search(
     query_vec = embed_query(question).astype("float32").reshape(1, -1)
 
     # Search more than needed so we can filter by law_type
-    search_k = min(top_k * 5, index.ntotal)
+    search_k = min(top_k * 50, index.ntotal)
     scores, indices = index.search(query_vec, search_k)
 
     hits: List[Dict[str, Any]] = []
