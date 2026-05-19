@@ -1,38 +1,39 @@
-"""FastAPI server — Vietnamese Legal AI Agent (teckstack.md §5.2)."""
-from __future__ import annotations
+import sys
+import os
 import logging
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.models import ChatRequest, ChatResponse, LAW_TYPES
-from app.pipeline import run_pipeline
-from app.rag.vector_store import get_stats
-from app.classifier import predict_law_type
+
+# Ensure backend module can be imported
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
+
+from backend.app.routes import chat, health, documents
+from backend.app.config import settings
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s | %(levelname)-7s | %(name)s | %(message)s")
 logger = logging.getLogger(__name__)
 
-app = FastAPI(title="Vietnamese Legal AI", version="1.0.0")
-app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
+app = FastAPI(title="Vietnamese Legal AI", version="2.0.0")
+
+# Setup CORS
+app.add_middleware(
+    CORSMiddleware, 
+    allow_origins=["*"], # In production, restrict this
+    allow_credentials=True, 
+    allow_methods=["*"], 
+    allow_headers=["*"]
+)
+
+# Include routers
+app.include_router(health.router, prefix="/api", tags=["Health"])
+app.include_router(chat.router, prefix="/api", tags=["Chat"])
+app.include_router(documents.router, prefix="/api", tags=["Documents"])
+
+@app.get("/")
+def read_root():
+    return {"message": "Welcome to Vietnamese Legal AI Agent API (LangGraph Version)"}
+
 
 @app.get("/health")
-async def health():
-    return {"status": "ok", "vector_store": get_stats()}
-
-@app.get("/law-types")
-async def law_types():
-    return {"law_types": LAW_TYPES}
-
-@app.post("/chat", response_model=ChatResponse)
-async def chat(req: ChatRequest):
-    try:
-        return run_pipeline(req)
-    except Exception as e:
-        logger.exception("Pipeline error")
-        raise HTTPException(status_code=500, detail=str(e))
-
-@app.post("/classify")
-async def classify(req: dict):
-    question = req.get("question", "")
-    if not question:
-        raise HTTPException(400, "question required")
-    return {"predicted_law_type": predict_law_type(question)}
+async def root_health():
+    return await health.health_endpoint()

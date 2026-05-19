@@ -1,7 +1,11 @@
 fastapi==0.115.6
 uvicorn[standard]==0.34.0
 python-dotenv==1.0.1
+pydantic-settings==2.6.1
+langgraph==0.6.11
 ollama==0.4.7
+httpx==0.28.1
+qdrant-client==1.15.1
 pandas==2.2.3
 pyarrow==18.1.0
 faiss-cpu==1.9.0
@@ -11,3 +15,6 @@ lxml==5.3.0
 pydantic==2.10.3
 scikit-learn==1.6.0
 datasets==3.2.0
+pymupdf==1.26.0
+docx2pdf==0.1.8
+python-multipart==0.0.20

@@ -1,90 +1,132 @@
-# 🏛️ Vietnamese Legal AI Agent
+# LegalAI
 
-Full-stack AI legal assistant: **FastAPI** + **Next.js** + **FAISS** + **TailwindCSS**
+LegalAI la chatbot phap ly tieng Viet voi kien truc `FastAPI + LangGraph + Qdrant + Ollama + Next.js`.
 
-## Architecture
+## Stack
 
+- Backend: FastAPI, LangGraph
+- Retrieval: Qdrant, `keepitreal/vietnamese-sbert`
+- LLM local: Ollama
+- Frontend: Next.js, React, `react-pdf`
+- Monitoring: LangSmith
+
+## Kien truc hien tai
+
+Luong chinh:
+
+`Frontend -> /api/chat (Next.js route) -> /api/chat (FastAPI) -> LangGraph -> Qdrant -> citations + PDF viewer`
+
+LangGraph hien tai gom 5 node:
+
+1. `query_classifier`
+2. `legal_retriever`
+3. `legal_analyzer`
+4. `fact_checker`
+5. `response_generator`
+
+## Cau truc thu muc chinh
+
+```text
+backend/
+  app/
+    main.py
+    config.py
+    schema.py
+    routes/
+      chat.py
+      documents.py
+      health.py
+  agents/
+    graph.py
+    state.py
+    query_classifier.py
+    legal_retriever.py
+    legal_analyzer.py
+    fact_checker.py
+    response_generator.py
+  retrieval/
+    qdrant_client.py
+    hybrid_search.py
+    citation_builder.py
+  pipeline/
+    crawler/
+      vbpl_crawler.py
+      pdf_downloader.py
+    converter/
+      file_converter.py
+      crawler_integration.py
+    processor/
+      pdf_reader.py
+      chunker.py
+    ingestor/
+      embedder.py
+      qdrant_ingestor.py
+  wiki/
+    generator.py
+  storage/
+    pdfs/
+    raw/
+    downloads/
+
+frontend/
+  src/
+    app/
+      page.tsx
+      api/chat/route.ts
+    components/
+      DocumentViewer/
+        CitationCard.tsx
+        PdfPanel.tsx
 ```
-Frontend (Next.js + TailwindCSS)  →  /api/chat (Next.js API Route)  →  POST /chat (Python FastAPI)  →  FAISS Vector DB
-```
 
-## Project Structure
+## Tinh nang dang co
 
-```
-CHATBOT/
-├── backend/                    # Python FastAPI
-│   ├── app/
-│   │   ├── main.py             # FastAPI server (POST /chat)
-│   │   ├── config.py           # Environment config
-│   │   ├── models.py           # Pydantic schemas
-│   │   ├── pipeline.py         # 5-stage pipeline orchestrator
-│   │   ├── prompt_builder.py   # System + user prompt
-│   │   ├── llm_client.py       # OpenAI + JSON validation + retry
-│   │   ├── classifier.py       # Law type classifier (sklearn)
-│   │   ├── evaluator.py        # Batch evaluation script
-│   │   └── rag/
-│   │       ├── data_loader.py  # Parquet loading + cleaning
-│   │       ├── chunker.py      # Text chunking
-│   │       ├── embedder.py     # Sentence-transformers
-│   │       ├── vector_store.py # FAISS index management
-│   │       └── retriever.py    # Search + law_type filtering
-│   ├── ingest.py               # Data ingestion CLI
-│   ├── requirements.txt
-│   └── .env.example
-├── frontend/                   # Next.js (App Router)
-│   ├── src/
-│   │   ├── app/
-│   │   │   ├── page.tsx        # Home — law selection
-│   │   │   ├── chat/page.tsx   # Chat page
-│   │   │   └── api/chat/route.ts # Proxy to Python
-│   │   └── components/
-│   │       ├── LawSelector.tsx
-│   │       ├── ChatBox.tsx
-│   │       └── MessageBubble.tsx
-│   └── .env.local
-├── docs/                       # Spec files
-└── vietnamese-legal-documents/ # Dataset (parquet)
-```
+- Chat phap ly theo domain
+- Retrieval theo Qdrant
+- Citation co `pdf_url` tro den file PDF that
+- Document Viewer ben phai bang `react-pdf`
+- Tu dong normalize file tai lieu ve PDF trong pipeline crawler
 
-## Quick Start
+## Chay local
 
-### 1. Backend Setup
+### 1. Backend
 
 ```bash
 cd backend
 pip install -r requirements.txt
-cp .env.example .env            # Edit: set OPENAI_API_KEY
-python ingest.py --max-docs 2000  # Ingest data into FAISS
-uvicorn app.main:app --reload --port 8000
 ```
 
-### 2. Frontend Setup
+Can cac dich vu:
+
+- Qdrant tai `http://localhost:6333`
+- Ollama tai `http://localhost:11434`
+
+Chay backend:
+
+```bash
+cd ..
+D:\CHATBOT\.venv\Scripts\python.exe -m uvicorn backend.app.main:app --host 0.0.0.0 --port 8000
+```
+
+### 2. Frontend
 
 ```bash
 cd frontend
 npm install
-npm run dev                     # → http://localhost:3000
+npm run dev
 ```
 
-### 3. Test
+Frontend mac dinh chay tai `http://localhost:3000` va goi backend qua `PYTHON_API_URL=http://localhost:8000`.
 
-- Open http://localhost:3000
-- Select a law category
-- Ask a question in Vietnamese
+## API chinh
 
-### 4. Evaluate
+- `GET /health`
+- `POST /api/chat`
+- `GET /api/documents/{domain}`
+- `GET /api/document/{domain}/{filename}`
+- `GET /api/document/{domain}/{filename}/metadata`
 
-```bash
-cd backend
-python -m app.evaluator
-```
+## Ghi chu
 
-## API
-
-| Method | Endpoint | Service |
-|--------|----------|---------|
-| POST | `/api/chat` | Next.js → proxies to Python |
-| POST | `/chat` | Python FastAPI (AI processing) |
-| POST | `/classify` | Python — predict law_type |
-| GET | `/health` | Python — system status |
-| GET | `/law-types` | Python — available categories |
+- README nay da duoc cap nhat theo `LEGALAI_ARCHITECTURE.md`.
+- Tai lieu huong dan crawler cu da bi loai bo de tranh lech voi codebase hien tai.

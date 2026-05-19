@@ -1,25 +1,39 @@
-"""Configuration — environment variables and typed settings."""
 import os
 from pathlib import Path
-from dotenv import load_dotenv
+from pydantic_settings import BaseSettings
 
-load_dotenv(Path(__file__).resolve().parent.parent / ".env")
+class Settings(BaseSettings):
+    # LLM
+    OLLAMA_BASE_URL: str = "http://localhost:11434"
+    OLLAMA_MODEL: str = "gemma3:12b"
+    OLLAMA_CHAT_MODEL: str = "mistral:latest"
+    OLLAMA_WIKI_MODEL: str = "gemma3:12b"
+    OLLAMA_TIMEOUT_SECONDS: int = 180
+    OLLAMA_CHAT_TIMEOUT_SECONDS: int = 45
+    
+    # Embedding
+    EMBEDDING_MODEL: str = "keepitreal/vietnamese-sbert"
+    
+    # Qdrant
+    QDRANT_URL: str = "http://localhost:6333"
+    QDRANT_COLLECTION_DOCS: str = "legal_docs"
+    QDRANT_COLLECTION_WIKI: str = "legal_wiki"
+    
+    # LangSmith
+    LANGCHAIN_TRACING_V2: str = "false"
+    LANGCHAIN_API_KEY: str = ""
+    LANGCHAIN_PROJECT: str = "legalai-vietnam"
+    
+    class Config:
+        env_file = str(Path(__file__).resolve().parents[1] / ".env")
+        env_file_encoding = "utf-8"
+        extra = "ignore"
 
-# ── Ollama (Local LLM) ────────────────────────────────────────────────
-OLLAMA_BASE_URL: str = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
-OLLAMA_MODEL: str = os.getenv("OLLAMA_MODEL", "mistral")
-LLM_TEMPERATURE: float = float(os.getenv("LLM_TEMPERATURE", "0.1"))
+settings = Settings()
 
-# ── Embedding ─────────────────────────────────────────────────────────
-EMBEDDING_MODEL: str = os.getenv("EMBEDDING_MODEL", "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2")
-
-# ── RAG ───────────────────────────────────────────────────────────────
-RAG_TOP_K: int = int(os.getenv("RAG_TOP_K", "5"))
-
-# ── Paths ─────────────────────────────────────────────────────────────
-DATA_DIR: Path = Path(__file__).resolve().parent.parent.parent / "vietnamese-legal-documents" / "data"
-FAISS_DIR: Path = Path(__file__).resolve().parent.parent / "faiss_index"
-
-# ── Server ────────────────────────────────────────────────────────────
-HOST: str = os.getenv("HOST", "0.0.0.0")
-PORT: int = int(os.getenv("PORT", "8000"))
+# Set up LangSmith automatically if enabled
+if settings.LANGCHAIN_TRACING_V2.lower() == "true":
+    os.environ["LANGCHAIN_TRACING_V2"] = "true"
+    if settings.LANGCHAIN_API_KEY:
+        os.environ["LANGCHAIN_API_KEY"] = settings.LANGCHAIN_API_KEY
+    os.environ["LANGCHAIN_PROJECT"] = settings.LANGCHAIN_PROJECT
