@@ -55,6 +55,7 @@ vbpl_*.html
 vbpl_chunk_*.js
 
 # Legacy vector / experiment data
+qdrant_data/
 faiss_index/
 *.index
 *.pkl
