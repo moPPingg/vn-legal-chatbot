@@ -41,7 +41,6 @@ backend_server.out.log
 frontend/frontend-dev.log
 
 # Generated runtime data
-qdrant_data/
 backend/storage/
 !backend/storage/.gitkeep
 !backend/storage/**/.gitkeep
